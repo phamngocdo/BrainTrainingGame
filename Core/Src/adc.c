@@ -24,14 +24,3 @@ uint16_t ADC_Read(void) {
     while (!(ADC1->SR & (1 << 1)));        // Wait for EOC
     return (uint16_t)(ADC1->DR);           // Read result
 }
-
-Difficulty GetDifficulty(void) {
-    uint16_t adc_value = ADC_Read();
-
-    if (adc_value < 1365)
-        return DIFFICULTY_EASY;
-    else if (adc_value < 2731)
-        return DIFFICULTY_MEDIUM;
-    else
-        return DIFFICULTY_HARD;
-}

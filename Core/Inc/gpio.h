@@ -8,6 +8,8 @@
 #define LED3_PIN        2
 #define LED4_PIN        3
 
+#define ENTER_BUTTON    5
+
 #define BTN1_PIN        8
 #define BTN2_PIN        9
 #define BTN3_PIN        10

@@ -32,3 +32,10 @@ void UART1_SendString(const char *str) {
         UART1_SendChar(*str++);
     }
 }
+
+// === Helper: Send message with ANSI color ===
+void UART1_Printf(const char* msg, const char* color_code) {
+    UART_SendString(color_code);
+    UART_SendString(msg);
+    UART_SendString("\033[0m\r\n"); // Reset color
+}
