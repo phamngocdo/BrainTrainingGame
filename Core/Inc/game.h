@@ -5,7 +5,8 @@
 #include <stdint.h>
 
 #define MAX_DIFFICULTY     10
-#define MAX_LEVEL          20
+#define MAX_LEVEL          15
+#define MAX_LED_PER_LEVEL  15
 
 void Game_Init(void);
 void SetDifficulty(uint8_t difficulty);

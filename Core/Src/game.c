@@ -5,8 +5,6 @@
 #include "adc.h"
 #include <stdio.h>
 
-#define MAX_LED_PER_LEVEL 10
-
 static uint8_t current_level = 0;
 static uint8_t current_index = 0;
 static uint8_t difficulty = 5;
@@ -27,24 +25,31 @@ volatile GameState current_state = STATE_WAIT_DIFFICULTY;
 
 // Delay time (ms) for each difficulty level
 static const uint16_t delay_table[MAX_DIFFICULTY] = {
-    2000, 700, 600, 500, 400, 350, 300, 250, 200, 150
+    2000, 1800, 1600, 1400, 1200, 1000, 800, 600, 400, 200
 };
 
 // LED sequences for each level
 static const uint8_t led_sequence[MAX_LEVEL][MAX_LED_PER_LEVEL] = {
-    {0, 1, 2, 2}, {1,2}, {2,3,0}, {3,0,1,2}, {0,2,1,3,1},
-    {3,1,0,2,1,0}, {2,0,3,1,2,3,0},
-    {1,3,2,0,1,0,2,3}, {0,1,2,3,0,1,2,3,1},
-    {3,2,1,0,3,2,1,0,1,2},
-    {0,3}, {1,0,2}, {2,1,0,3}, {3,1,2,0,1},
-    {2,0,3,1,0,3}, {1,2,3,0,1,2,3},
-    {0,1,2,3,1,0,2,3}, {3,0,1,2,0,1,3,2},
-    {1,2,3,0,2,1,0,3}, {0,1,2,3,0,1,2,3,1,2}
+    {0, 1, 0},
+    {0, 0, 1, 1},
+    {0, 1, 2, 3},
+    {3, 2, 1, 3},
+    {2, 1, 0, 0},
+    {3, 2, 1, 3},
+    {0, 1, 1, 2, 2},
+    {0, 1, 2, 3, 0},
+    {1, 2, 1, 2, 3, 3},
+    {1, 3, 2, 0, 1, 3, 3},
+    {3, 1, 0, 2, 2, 3, 0, 1},
+    {0, 0, 1, 3, 3, 0, 1, 3, 2},
+    {1, 2, 2, 1, 0, 1, 2, 3, 0, 1},
+    {1, 0, 3, 1, 0, 3, 1, 2, 1, 0, 3, 2},
+    {1, 1, 0, 3, 1, 2, 0, 2, 3, 2, 0, 1, 0}
 };
 
 // Number of LEDs in each level
 static const uint8_t led_count[MAX_LEVEL] = {
-    4,2,3,4,5,6,7,8,9,10, 2,3,4,5,6,7,8,8,8,10
+    3, 4, 4, 4, 4, 4, 5, 5, 6, 7, 8, 9, 10, 11, 12
 };
 
 // === Game Initialization ===
@@ -63,7 +68,6 @@ void SetDifficulty(uint8_t d) {
 
 }
 
-
 // === Start game ===
 void Start(void) {
     UART1_Printf("[Game] Start", "\033[32m");
@@ -74,21 +78,15 @@ void Start(void) {
 
 // === Handle button press ===
 void ChooseButtonWhenPlay(uint8_t button_index) {
-    // Chống dội nút đơn giản
-      // Delay khoảng vài ms
-
-    // In nút được bấm để debug
     char dbg[32];
     sprintf(dbg, "[Button] Pressed: %d", button_index);
     UART1_Printf(dbg, "\033[33m");
 
-    // Lấy LED mong đợi tiếp theo
     uint8_t expected = led_sequence[current_level][current_index];
 
     if (button_index == expected) {
         current_index++;
 
-        // Nếu vượt quá số LED của level hiện tại
         if (current_index >= led_count[current_level]) {
             current_level++;
             current_index = 0;
@@ -132,18 +130,17 @@ void Game_LEDNextLevel() {
 
     for (uint8_t i = 0; i < led_count[current_level]; i++) {
         uint8_t led = led_sequence[current_level][i];
-        LED_On(led);                             // Bật LED tương ứng
-        LED_Off(led);                            // Tắt tất cả LED trước khi hiện tiếp
-        Timer_Start(delay_table[difficulty - 1]); // Tự động show LED
+        LED_On(led);                             
+        LED_Off(led);                            
+        Timer_Start(delay_table[difficulty - 1]); // delay for the next led
     }
 
     UART1_Printf("[Game] Your turn!", "\033[33m");
-    current_index = 0;  // Reset index để người chơi nhập lại
+    current_index = 0;  
 }
 
 void Game_Loop() {
     while (1) {
-        // === Chờ chọn độ khó ===
         if (current_state == STATE_WAIT_DIFFICULTY) {
             uint16_t adc_val = ADC_Read();  // 0 - 4095
             uint8_t new_difficulty = (adc_val * 10) / 4096 + 1;
@@ -160,14 +157,10 @@ void Game_Loop() {
             }
         }
 
-        // === Đang chơi game ===
         else if (current_state == STATE_PLAYING) {
-            // Có thể thêm logic chờ hiệu ứng, hoặc hiện level
             char buffer[32];
             sprintf(buffer, "Playing level: %u", current_level + 1);
             UART1_Printf(buffer, "\033[36m");
-
-
             while(current_state == STATE_PLAYING);
         }
 
@@ -176,26 +169,20 @@ void Game_Loop() {
         	current_state = STATE_PLAYING;
         }
 
-        // === Hiển thị điểm & chờ restart ===
         else if (current_state == STATE_WAIT_RESTART) {
             UART1_Printf("Press button 1 to play again", "\033[36m");
             while(current_state == STATE_WAIT_RESTART);
-            // Đợi người dùng nhấn để reset trong EXTI
         }
 
-        // === Chờ hiển thị hiệu ứng Start xong thì về PLAYING ===
         else if (current_state == STATE_START) {
-            // Đợi hiệu ứng LED được Timer phát xong
-            // Mình nên để Timer_Stop ở hàm Game_ShowNextLED khi đủ LED
-            // Khi LED xong thì tự chuyển sang PLAYING lại
+        
         }
     }
 }
 
 
-
+// Handle event for button 2 and 3
 void EXTI9_5_IRQHandler(void) {
-
     if (EXTI->PR & (1 << 9)) {
 
         if (current_state == STATE_PLAYING) {
@@ -204,45 +191,42 @@ void EXTI9_5_IRQHandler(void) {
         for (volatile int i = 0; i < 100000; i++);
         EXTI->PR |= (1 << 9);
     }
+
     if (EXTI->PR & (1 << 8)) {
-
         switch (current_state) {
-            case STATE_WAIT_DIFFICULTY:
-                 SetDifficulty(temp_difficulty);
-                 Start();
-                 current_state = STATE_SHOWLEVEL;
-                 break;
+            case STATE_WAIT_DIFFICULTY: // Enter difficulty
+                SetDifficulty(temp_difficulty);
+                Start();
+                current_state = STATE_SHOWLEVEL;
+                break;
 
-             case STATE_WAIT_RESTART:
-            	 current_level = 0;
-            	 current_index = 0;
-            	 current_score = 0;
-                 current_state = STATE_WAIT_DIFFICULTY;
-                 char buffer[32];
-                 sprintf(buffer, "Set difficulty: %u", temp_difficulty);
-                 UART1_Printf(buffer, "\033[33m");
-                 UART1_Printf("Press button 1 to start", "\033[36m");
+             case STATE_WAIT_RESTART: // Restart game
+            	current_level = 0;
+            	current_index = 0;
+            	current_score = 0;
+                current_state = STATE_WAIT_DIFFICULTY;
+                char buffer[32];
+                sprintf(buffer, "Set difficulty: %u", temp_difficulty);
+                UART1_Printf(buffer, "\033[33m");
+                UART1_Printf("Press button 1 to start", "\033[36m");
+                break;
 
-                 break;
-
-
-
-             case STATE_PLAYING:
-                 ChooseButtonWhenPlay(0);
-                 break;
+             case STATE_PLAYING: // Choose button when playing
+                ChooseButtonWhenPlay(0);
+                break;
 
              default:
-                 break;
+                break;
         }
+        // Avoid debounce
         for (volatile int i = 0; i < 100000; i++);
         EXTI->PR |= (1 << 8);
     }
 
 }
 
+// Handle event for button 2 and 3
 void EXTI15_10_IRQHandler(void) {
-
-
     if (EXTI->PR & (1 << 10)) {
 
         if (current_state == STATE_PLAYING) {
@@ -259,7 +243,6 @@ void EXTI15_10_IRQHandler(void) {
         for (volatile int i = 0; i < 100000; i++);
         EXTI->PR |= (1 << 11);
     }
-
 }
 
 
