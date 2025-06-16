@@ -14,7 +14,7 @@ void UART1_Init(uint32_t baudrate) {
 
     // 3. Configure USART1 baudrate
     // PCLK2 = 84 MHz → USARTDIV = 84MHz / baudrate
-    USART1->BRR = 84000000 / baudrate;
+    USART1->BRR = 16000000 / baudrate;
 
     // 4. Enable USART1: TE, RE, UE
     USART1->CR1 = (1 << 13) | (1 << 3) | (1 << 2); // UE, TE, RE
@@ -35,7 +35,7 @@ void UART1_SendString(const char *str) {
 
 // === Helper: Send message with ANSI color ===
 void UART1_Printf(const char* msg, const char* color_code) {
-    UART_SendString(color_code);
-    UART_SendString(msg);
-    UART_SendString("\033[0m\r\n"); // Reset color
+    UART1_SendString(color_code);
+    UART1_SendString(msg);
+    UART1_SendString("\033[0m\r\n"); // Reset color
 }

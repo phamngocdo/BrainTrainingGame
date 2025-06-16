@@ -14,6 +14,7 @@ void ChooseButtonWhenPlay(uint8_t button_index);
 void Game_Win(void);
 void Game_Over(void);
 void DisplayTopGamer(uint8_t score);
-void Game_ShowNextLED(void);
+void Game_LEDNextLevel(void);
+void Game_Loop(void);
 
 #endif

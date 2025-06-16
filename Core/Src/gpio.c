@@ -71,7 +71,7 @@ void PWM_SetDuty(uint8_t index, uint8_t duty_percent) {
 void PWM_FadeOut(uint8_t index) {
     for (int i = 100; i >= 0; i -= 5) {
         PWM_SetDuty(index, i);
-        for (volatile int d = 0; d < 30000; d++); // Software delay
+        for (volatile int d = 0; d < 20000; d++); // Software delay
     }
 }
 
