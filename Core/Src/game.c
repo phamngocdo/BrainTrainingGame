@@ -51,7 +51,7 @@ static const uint16_t delay_table[MAX_DIFFICULTY] = {
 
 // LED sequences for each level
 static const uint8_t led_sequence[MAX_LEVEL][MAX_LED_PER_LEVEL] = {
-    {3, 3, 3},
+    {1, 0, 1},
     {0, 0, 1, 1},
     {0, 1, 2, 3},
     {3, 2, 1, 3},
@@ -112,7 +112,7 @@ void Start(void) {
         SSD1306_DrawChar(current_col, 2, start_message[i]); // Display on page 2
         current_col += 6;
     }
-    for (volatile int i = 0; i < 3000000; i++);
+    Timer_Start(3000);
 }
 
 // === Handle button press ===
@@ -183,7 +183,7 @@ void ChooseButtonWhenPlay(uint8_t button_index) {
                     SSD1306_DrawChar(current_col, 2, level_up_message[i]); // Display on page 2 (rows 16-23)
                     current_col += 6; // Move to next character position
                 }
-                for (volatile int i = 0; i < 3000000; i++);
+                Timer_Start(3000);
                 current_state = STATE_SHOWLEVEL;  // Cho phép hiển thị LED
             }
         }
@@ -230,6 +230,10 @@ void Game_Over(void) {
     UART1_Printf(buffer, "\033[36m");
     SSD1306_Clear();
     // Line 1: "Game over!"
+    uint8_t tens_digit = current_score / 10;
+        uint8_t ones_digit = current_score % 10;
+
+        // Dòng 1: "Game over!"
         const uint8_t *line1[] = {
             Font5x7[char_to_index('G')], // G
             Font5x7[char_to_index('a')], // a
@@ -243,7 +247,7 @@ void Game_Over(void) {
             Font5x7[char_to_index('!')]  // !
         };
 
-        // Line 2: "Score: X"
+        // Dòng 2: "Score: XX" (2 chữ số)
         const uint8_t *line2[] = {
             Font5x7[char_to_index('S')], // S
             Font5x7[char_to_index('c')], // c
@@ -252,23 +256,24 @@ void Game_Over(void) {
             Font5x7[char_to_index('e')], // e
             Font5x7[char_to_index(':')], // :
             Font5x7[char_to_index(' ')], // (space)
-            Font5x7[16 + current_score]  // Score digit (0-9)
+            Font5x7[16 + tens_digit],    // Chữ số hàng chục (0-9)
+            Font5x7[16 + ones_digit]     // Chữ số hàng đơn vị (0-9)
         };
 
-        // Display line 1 (centered)
-        uint8_t line1_width = 10 * 6; // 10 chars * 6px each
+        // Hiển thị dòng 1 ("Game over!")
+        uint8_t line1_width = 10 * 6; // 10 ký tự
         uint8_t start_col1 = (128 - line1_width) / 2;
         for (uint8_t i = 0; i < 10; i++) {
-            SSD1306_DrawChar(start_col1 + (i * 6), 2, line1[i]);
+            SSD1306_DrawChar(start_col1 + (i * 6), 2, line1[i]); // Page 2
         }
 
-        // Display line 2 (centered)
-        uint8_t line2_width = 8 * 6; // 8 chars * 6px each
+        // Hiển thị dòng 2 ("Score: XX")
+        uint8_t line2_width = 9 * 6; // 9 ký tự (tăng thêm 1 cho chữ số thứ 2)
         uint8_t start_col2 = (128 - line2_width) / 2;
-        for (uint8_t i = 0; i < 8; i++) {
-            SSD1306_DrawChar(start_col2 + (i * 6), 4, line2[i]);
+        for (uint8_t i = 0; i < 9; i++) {
+            SSD1306_DrawChar(start_col2 + (i * 6), 4, line2[i]); // Page 4
         }
-        for (volatile int i = 0; i < 5000000; i++);
+        Timer_Start(5000);
 
     current_state = STATE_WAIT_RESTART;
 }
@@ -406,7 +411,7 @@ void Game_Loop() {
                         Font5x7[char_to_index('s')],
                         Font5x7[char_to_index('s')],
                         Font5x7[char_to_index(' ')],
-                        Font5x7[char_to_index('1')], // Số 0
+                        Font5x7[char_to_index('0')], // Số 0
                         Font5x7[char_to_index(' ')],
                         Font5x7[char_to_index('t')],
                         Font5x7[char_to_index('o')],
@@ -499,7 +504,7 @@ void Game_Loop() {
                 Font5x7[char_to_index('s')],
                 Font5x7[char_to_index('s')],
                 Font5x7[char_to_index(' ')],
-                Font5x7[num_to_font_index(1)]
+                Font5x7[num_to_font_index(0)]
             };
 
             // Line 2: "to play again"
@@ -549,15 +554,24 @@ void Game_Loop() {
 // Handle event for button 2 and 3
 void EXTI9_5_IRQHandler(void) {
     if (EXTI->PR & (1 << 9)) {
+    	EXTI->IMR &= ~(1 << 8);
+    	EXTI->IMR &= ~(1 << 10);
+    	EXTI->IMR &= ~(1 << 11);
 
         if (current_state == STATE_PLAYING) {
             ChooseButtonWhenPlay(1);
         }
-        for (volatile int i = 0; i < 100000; i++);
+        for (volatile int i = 0; i < 100; i++);
         EXTI->PR |= (1 << 9);
+        EXTI->IMR |= (1 << 8);
+        EXTI->IMR |= (1 << 10);
+        EXTI->IMR |= (1 << 11);
     }
 
     if (EXTI->PR & (1 << 8)) {
+    	EXTI->IMR &= ~(1 << 9);
+    	EXTI->IMR &= ~(1 << 10);
+    	EXTI->IMR &= ~(1 << 11);
         switch (current_state) {
             case STATE_WAIT_DIFFICULTY: // Enter difficulty
                 SetDifficulty(temp_difficulty);
@@ -642,8 +656,11 @@ void EXTI9_5_IRQHandler(void) {
                 break;
         }
         // Avoid debounce
-        for (volatile int i = 0; i < 100000; i++);
+        for (volatile int i = 0; i < 100; i++);
         EXTI->PR |= (1 << 8);
+        EXTI->IMR |= (1 << 9);
+        EXTI->IMR |= (1 << 10);
+        EXTI->IMR |= (1 << 11);
     }
 
 }
@@ -651,20 +668,32 @@ void EXTI9_5_IRQHandler(void) {
 // Handle event for button 2 and 3
 void EXTI15_10_IRQHandler(void) {
     if (EXTI->PR & (1 << 10)) {
+    	EXTI->IMR &= ~(1 << 8);
+    	EXTI->IMR &= ~(1 << 9);
+    	EXTI->IMR &= ~(1 << 11);
 
         if (current_state == STATE_PLAYING) {
             ChooseButtonWhenPlay(2);
         }
-        for (volatile int i = 0; i < 100000; i++);
+        for (volatile int i = 0; i < 100; i++);
         EXTI->PR |= (1 << 10);
+        EXTI->IMR |= (1 << 8);
+        EXTI->IMR |= (1 << 9);
+        EXTI->IMR |= (1 << 11);
     }
     if (EXTI->PR & (1 << 11)) {
+    	EXTI->IMR &= ~(1 << 8);
+    	EXTI->IMR &= ~(1 << 10);
+    	EXTI->IMR &= ~(1 << 9);
 
         if (current_state == STATE_PLAYING) {
             ChooseButtonWhenPlay(3);
         }
-        for (volatile int i = 0; i < 100000; i++);
+        for (volatile int i = 0; i < 100; i++);
         EXTI->PR |= (1 << 11);
+        EXTI->IMR |= (1 << 8);
+        EXTI->IMR |= (1 << 10);
+        EXTI->IMR |= (1 << 9);
     }
 }
 
