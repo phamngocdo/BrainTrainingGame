@@ -47,6 +47,7 @@ A brain-training memory game built with the STM32F401CCU6 microcontroller. The g
 3. Connect STM32F401 board and flash the code
 4. Enjoy the game!
 
-👥 Authors
+## 👥 Authors
 Pham Ngoc Do – github.com/phamngocdo
+
 Nguyen Tien Dung - github.com/guin-D
