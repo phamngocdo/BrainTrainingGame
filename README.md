@@ -6,8 +6,8 @@ A brain-training memory game built with the STM32F401CCU6 microcontroller. The g
 
 ## 🔧 Features
 
-- 🚥 3 LEDs connected to GPIO pins (PA0 - PA2)
-- 🔘 3 buttons for user input (PA9 - PA11)
+- 🚥 4 LEDs connected to GPIO pins (PA0 - PA3)
+- 🔘 4 buttons for user input (PA8 - PA11)
 - 🎮 Randomly flashing LED sequence each round
 - ✅ Player wins by pressing buttons in correct order
 - ❌ Game ends if player makes a wrong move
@@ -21,10 +21,11 @@ A brain-training memory game built with the STM32F401CCU6 microcontroller. The g
 ## 🛠️ Hardware Requirements
 
 - STM32F401CCU6 (Blue Pill or similar board)
-- 3 LEDs + resistors
-- 3 Push buttons + pull-down resistors
+- 4 LEDs + resistors
+- 4 Push buttons + pull-down resistors
 - Breadboard and jumper wires
 - USB-TTL adapter for serial communication (optional, for debugging)
+- SSD1306 Screen
 
 ## ⚙️ Software Used
 
@@ -39,5 +40,13 @@ A brain-training memory game built with the STM32F401CCU6 microcontroller. The g
 3. If the input matches, next round starts with a longer sequence.
 4. If the input is wrong, game ends and restarts.
 
-## 📁 Repository Structure
+## 🚀 Getting Started
 
+1. Clone the repo
+2. Open project with STM32CubeIDE
+3. Connect STM32F401 board and flash the code
+4. Enjoy the game!
+
+👥 Authors
+Pham Ngoc Do – github.com/phamngocdo
+Nguyen Tien Dung - github.com/guin-D
